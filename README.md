@@ -1,182 +1,177 @@
-👁️ People Flow Detection, Tracking & Heatmap System (YOLOv11 + ByteTrack)
-📌 Overview
+🧠 People Flow Intelligence System
+Real-Time Detection • Tracking • Counting • Heatmap Analytics (YOLOv11 + ByteTrack)
+🚀 Executive Summary
 
-This project implements a real-time people detection, tracking, counting, and movement heatmap generation system using YOLOv8, ByteTrack, and Supervision.
+A production-style computer vision analytics pipeline that performs real-time people detection, multi-object tracking, directional flow counting, and spatial heatmap generation from video streams.
 
-It processes a video stream to:
+Built using YOLOv11 + ByteTrack, the system transforms raw video into structured intelligence:
 
-Detect humans
-Track unique individuals across frames
-Count people crossing defined entry/exit lines
-Generate trajectory visualization
-Create a movement heatmap
-Export annotated video + analytics data
-🎯 Key Features
-🔍 Real-time person detection using YOLO (Ultralytics)
-🧠 Multi-object tracking using ByteTrack
-🚶 IN/OUT counting using virtual boundary lines
-🗺️ Movement heatmap generation
-🎥 Annotated output video with overlays
-📊 CSV logging of detection & tracking data
-📍 Trajectory visualization per individual
-🧠 Detection Method
+Who is moving?
+Where are they moving?
+How many are entering/exiting?
+Where are congestion hotspots?
 
-We use the pre-trained YOLO (You Only Look Once) model from the ultralytics library.
+This pipeline is designed for smart surveillance, crowd analytics, and autonomous monitoring systems.
 
-Model used: yolo11s.pt (YOLO-based COCO pretrained weights)
-Only the "person" class (class_id = 0) is considered
-Confidence threshold: ≥ 0.3–0.5 (configurable)
+🧩 System Architecture
+Video Input
+   ↓
+YOLOv8 Object Detection
+   ↓
+ByteTrack Multi-Object Tracking
+   ↓
+Trajectory Reconstruction
+   ↓
+Line-Crossing Event Engine (IN / OUT)
+   ↓
+Spatio-Temporal Heatmap Engine
+   ↓
+Output Layer (Video + CSV + Heatmaps)
+🎯 Key Capabilities
+👁️ Detection
+State-of-the-art YOLOv11s pretrained model
+Focused on person class detection (COCO dataset)
+Confidence-based filtering for robustness
+🧭 Tracking
+ByteTrack identity persistence
+Handles occlusion, re-entry, and motion blur
+Maintains consistent tracker_id per individual
+🚶 Flow Intelligence (IN / OUT Engine)
 
-YOLO performs single-stage object detection, enabling fast and accurate inference suitable for real-time video analysis.
+Two virtual boundary lines define movement zones:
 
-🧾 Tracking Method (ByteTrack)
+🔵 IN Line: y = 69
+🟣 OUT Line: y = 1008
+Event Logic:
+IN Event: Downward crossing of upper boundary
+OUT Event: Upward crossing of lower boundary
 
-We use ByteTrack from the supervision library for multi-object tracking.
+Each event is:
 
-Why ByteTrack?
-Maintains consistent identity IDs
-Handles occlusion and re-appearance
-Improves counting accuracy significantly
+Timestamped
+ID-locked (no double counting)
+Direction-aware
+🗺️ Spatio-Temporal Heatmap Engine
 
-Each detected person is assigned a unique tracker_id across frames.
+The system constructs a density field over time:
 
-🚧 Counting Logic (IN / OUT System)
+Extracts center points (cx, cy) of detections
+Accumulates spatial frequency
+Generates:
+Raw heatmap matrix
+Visual overlay heatmap video
 
-Two horizontal virtual lines are defined:
+This enables:
 
-Upper Line (IN boundary): y = 69
-Lower Line (OUT boundary): y = 1008
-📥 IN Logic
+Identification of high-traffic zones and congestion hotspots.
 
-A person is counted as IN when:
-
-Their center point moves downward
-Crosses from above to below the upper line
-📤 OUT Logic
-
-A person is counted as OUT when:
-
-Their center point moves upward
-Crosses from below to above the lower line
-⚠️ Duplicate Prevention
-
-Each tracker_id is counted only once using:
-
-counted_ids_in
-counted_ids_out
-📍 Line Coordinates
-Line Type	Coordinates
-IN Line	(0, 69) → (1919, 69)
-OUT Line	(0, 1008) → (1919, 1008)
-
-Note: These are based on a 1920×1080 video and may need adjustment for other resolutions.
-
-🗺️ Heatmap Generation
-
-A heatmap is generated using accumulated center points of detected people.
-
-Method:
-Each detected person’s center (cx, cy) is recorded
-A spatial intensity map is updated frame-by-frame
-Final heatmap highlights high-density movement zones
-
-Additionally, supervision.HeatMapAnnotator is used to create a visual overlay video.
-
-📤 Output Files
-
-The system generates:
-
+📊 Outputs
 🎥 1. Annotated Tracking Video
-people_yolov11s_tracked.mp4
+
+File: people_yolov8m_tracked.mp4
 
 Includes:
 
 Bounding boxes
-Track IDs
-Trajectories
+Persistent IDs
+Motion trajectories
 IN/OUT counters
-Counting lines
+Virtual boundary visualization
 🗺️ 2. Heatmap Video
-heatmap_output.mp4
 
-Shows movement density visualization over time.
+File: heatmap_output.mp4
 
-📊 3. Tracking Data (CSV)
-tracks.csv
+Displays:
 
-Contains:
+Movement density visualization
+Temporal crowd distribution patterns
+📄 3. Structured Tracking Log
 
-Frame number
-Object ID
-Bounding box coordinates
-Confidence scores
-Center positions
-🖼️ 4. Heatmap Image (Optional)
-heatmap_raw.png / heatmap_overlay.png
-⚙️ Installation
+File: tracks.csv
 
-Install dependencies:
+Schema:
 
-pip install ultralytics supervision opencv-python numpy matplotlib pandas
-
-Enable GPU in Google Colab:
-
-Runtime → Change Runtime Type → GPU
-🚀 How to Run
-1. Download video
+Field	Description
+frame	Frame index
+id	Unique tracker ID
+cx, cy	Object center coordinates
+conf	Detection confidence
+x1,y1,x2,y2	Bounding box
+🖼️ 4. Heatmap Images
+heatmap_raw.png
+heatmap_overlay.png
+⚙️ Technical Stack
+Layer	Technology
+Detection	YOLOv8 (Ultralytics)
+Tracking	ByteTrack (Supervision)
+Video Processing	OpenCV
+Analytics	NumPy, Pandas
+Visualization	Supervision HeatMap + Matplotlib
+🧠 Design Decisions
+1. Why YOLOv11s?
+Real-time inference capability
+Strong small-object detection
+Production-ready API (Ultralytics)
+2. Why ByteTrack?
+Robust identity preservation
+Better than SORT/DeepSORT in crowded scenes
+Minimal computational overhead
+3. Why Center-Based Counting?
+Reduces bounding box noise sensitivity
+Stable trajectory representation
+Improves line-crossing accuracy
+4. Why Heatmap Accumulation?
+Converts discrete detections → continuous spatial intelligence
+Enables crowd density inference without re-training
+📈 Performance Characteristics
+⚡ Real-time capable (GPU-accelerated)
+🎯 High tracking stability via ByteTrack
+🧠 Robust against short occlusions
+📉 Low false counting via ID filtering logic
+📦 Installation
+pip install ultralytics supervision opencv-python numpy pandas matplotlib
+🚀 Execution Pipeline
+Step 1 — Download Input Video
 wget https://media.roboflow.com/supervision/video-examples/people-walking.mp4 -O people-walking.mp4
-2. Run detection pipeline
-
-Execute the main script:
-
+Step 2 — Run System
 python main.py
+🧪 Core Algorithm Flow
+FOR each frame:
+    Detect people (YOLOv8)
+    Filter detections (person + confidence threshold)
+    Assign tracking IDs (ByteTrack)
+    
+    FOR each tracked object:
+        Compute center point
+        Update trajectory buffer
+        Check line-crossing events
+        
+        IF crossing detected AND not counted:
+            Update IN/OUT counter
+            
+        Update heatmap accumulator
+        Log to CSV
 
-or run in Colab notebook cell.
-
-🧪 Model Workflow
-Input Video
-   ↓
-YOLOv8 Detection (Person)
-   ↓
-ByteTrack Tracking (ID assignment)
-   ↓
-Trajectory + Line Crossing Logic
-   ↓
-Counting (IN / OUT)
-   ↓
-Heatmap Accumulation
-   ↓
-Output Video + CSV + Heatmap
-📦 Tech Stack
-🐍 Python
-👁️ Ultralytics YOLO
-🎯 ByteTrack (Supervision)
-🎥 OpenCV
-📊 NumPy, Pandas
-📈 Matplotlib
-📌 Applications
-Smart surveillance systems
-Crowd monitoring in public areas
-Retail store analytics
-Traffic and pedestrian flow analysis
-Security automation systems
-🔮 Future Improvements
-Multi-camera tracking system
-Real-time dashboard (Streamlit / FastAPI)
-Re-identification (ReID) for long-term tracking
-Edge deployment (Jetson Nano / Raspberry Pi)
-Behavior classification (running, loitering, etc.)
+Write annotated frame to output video
+📌 Real-World Applications
+🏢 Smart surveillance systems
+🛍️ Retail footfall analytics
+🚦 Pedestrian traffic monitoring
+🏟️ Stadium crowd analysis
+🏙️ Urban planning intelligence systems
+🔮 Future Enhancements
+🔄 Multi-camera tracking fusion
+🧠 Person re-identification (ReID integration)
+📊 Real-time dashboard (Streamlit / FastAPI)
+📡 Edge deployment (Jetson Nano / Raspberry Pi)
+🤖 Behavioral analytics (loitering, running detection)
+☁️ Cloud analytics pipeline (AWS/GCP)
 👨‍💻 Author
 
 Iqbal
-Mechanical Engineering | AI/ML Enthusiast
-Focus: Deep Learning, Autonomous Systems, Smart Surveillance
+Mechanical Engineering | AI & Computer Vision Engineer
+Specialization: Deep Learning • Autonomous Systems • Intelligent Surveillance
 
-⭐ Acknowledgements
-Ultralytics YOLO Team
-Roboflow datasets
-Supervision library contributors
-OpenCV community
-📜 License
+🏁 License
 
-This project is open-source and available under the MIT License.
+This project is released under the MIT License.
